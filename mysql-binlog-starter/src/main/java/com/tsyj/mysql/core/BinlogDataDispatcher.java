@@ -2,6 +2,7 @@ package com.tsyj.mysql.core;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.*;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -79,7 +80,7 @@ public class BinlogDataDispatcher implements BinaryLogClient.EventListener {
 
     private void dispatchEvent(UpdateRowsEventData data) {
         MySqlTable table = tableNameMap.get(data.getTableId());
-        String key = table.getDatabase() + "." + table.getTable();
+        String key = this.getKey(table.getDatabase(), table.getTable());
 
         List<DataListenerContainer> containers = listenerMap.get(key);
         List<Map.Entry<Serializable[], Serializable[]>> rows = data.getRows();
@@ -88,7 +89,7 @@ public class BinlogDataDispatcher implements BinaryLogClient.EventListener {
 
     private void dispatchEvent(DeleteRowsEventData data) {
         MySqlTable table = tableNameMap.get(data.getTableId());
-        String key = table.getDatabase() + "." + table.getTable();
+        String key = this.getKey(table.getDatabase(), table.getTable());
 
         List<DataListenerContainer> containers = listenerMap.get(key);
         List<Serializable[]> rows = data.getRows();
@@ -97,10 +98,17 @@ public class BinlogDataDispatcher implements BinaryLogClient.EventListener {
 
     private void dispatchEvent(WriteRowsEventData data) {
         MySqlTable table = tableNameMap.get(data.getTableId());
-        String key = table.getDatabase() + "." + table.getTable();
+        String key = this.getKey(table.getDatabase(), table.getTable());
 
         List<DataListenerContainer> containers = listenerMap.get(key);
         List<Serializable[]> rows = data.getRows();
         containers.forEach(c -> c.invokeInsert(rows));
+    }
+
+    private String getKey(String database, String table) {
+        if (StringUtils.isEmpty(database) || StringUtils.isEmpty(table)) {
+            return null;
+        }
+        return database + "." + table;
     }
 }
