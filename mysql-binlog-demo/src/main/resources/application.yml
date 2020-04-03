@@ -1,0 +1,9 @@
+binlog:
+  mysql:
+    hosts:
+    - name: test-db
+      host: localhost
+      port: 3306
+      username: maxwell
+      password: 123456
+      timeOffset: 28800000
